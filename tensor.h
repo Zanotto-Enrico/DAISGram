@@ -53,9 +53,7 @@ public:
      * Cleanup the data when deallocated
      */
     ~Tensor();
-
-    void init_progressive();
-
+    
     /**
      * Operator overloading ()
      * 
