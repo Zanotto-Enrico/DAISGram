@@ -318,6 +318,19 @@ void Tensor::write_file(string filename)
 
 	file.close();
 }
+
+Tensor Tensor::padding(int pad_h, int pad_w)
+{
+	Tensor result(r + 2 * pad_h, c + 2 * pad_w, d);
+
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int dep = 0; dep < d; dep++)
+				result(row + pad_h, col + pad_w, dep) = operator()(row, col, dep);
+
+	return result;
+}
+
 void Tensor::Copy(const Tensor& other)
 {
 	WipeData();
