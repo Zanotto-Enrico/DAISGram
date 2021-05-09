@@ -331,6 +331,19 @@ Tensor Tensor::padding(int pad_h, int pad_w)
 	return result;
 }
 
+Tensor Tensor::subset(unsigned int row_start, unsigned int row_end, unsigned int col_start, unsigned int col_end, unsigned int depth_start, unsigned int depth_end)
+{
+	Tensor result(row_end - row_start, col_end - col_start, depth_end - depth_start);
+
+	for(int row = 0; row < result.rows(); row++)
+		for(int col = 0; col < result.cols(); col++)
+			for(int ch = 0; ch < result.depth(); ch++)
+				result(row, col, ch) = operator()(row + row_start, col + col_start, ch + depth_start);
+	
+	return result;
+}
+
+
 void Tensor::Copy(const Tensor& other)
 {
 	WipeData();
