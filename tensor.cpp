@@ -343,6 +343,30 @@ Tensor Tensor::subset(unsigned int row_start, unsigned int row_end, unsigned int
 	return result;
 }
 
+Tensor Tensor::concat(const Tensor &rhs, int axis)
+{
+	if(d != rhs.d || (r != rhs.r && axis) || (c != rhs.c && !axis))
+		throw(concat_wrong_dimension());
+	
+	
+	Tensor result;
+	if(axis)
+		result.init(r, c + rhs.c, d);
+	else
+		result.init(r + rhs.r, c, d);
+
+	for(int row = 0; row < result.r; row++)
+		for(int col = 0; col < result.c; col++)
+			for(int ch = 0; ch < result.d; ch++)
+			{
+				if(row < r && col < c)
+					result(row, col, ch) = operator()(row, col, ch);
+				else 
+					result(row, col, ch) = rhs(row % r, col % c, ch);
+			}
+
+	return result;
+}
 
 void Tensor::Copy(const Tensor& other)
 {
