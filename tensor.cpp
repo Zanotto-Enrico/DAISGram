@@ -264,3 +264,47 @@ void Tensor::showSize()
 {
 	cout << r << " x " << c << " x " << d << endl;
 }
+
+ostream& operator<< (ostream& stream, const Tensor & obj)
+{
+	for(int i = 0; i < obj.r; i++)
+		for(int j = 0; j < obj.c; j++)
+			for(int k = 0; k < obj.d; k++)
+				stream << "[" << i << "," << j << "," << obj(i, j, k) << "]\n";
+
+	return stream;
+}
+
+void Tensor::read_file(string filename)
+{
+	ifstream file;
+	file.open (filename);
+
+	file >> r;
+	file >> c;
+	file >> d;
+
+	delete[] data;
+	data = new float[r * c * d];
+	for(int i = 0; i < r; i++)
+		for(int j = 0; j < c; j++)
+			for(int k = 0; k < d; k++)
+				file >> operator()(i, j, k);
+
+	file.close();
+}
+
+void Tensor::write_file(string filename)
+{
+	ofstream file;
+	file.open (filename);
+
+	file << r << '\n' << c << '\n' << d << '\n';
+
+	for(int i = 0; i < r; i++)
+		for(int j = 0; j < c; j++)
+			for(int k = 0; k < d; k++)
+				file << operator()(i, j, k) << '\n';
+
+	file.close();
+}
