@@ -3,7 +3,6 @@
 #include <random>
 #include <math.h>
 #include <fstream>
-#include <string.h>
 
 #include "dais_exc.h"
 #include "tensor.h"
@@ -42,47 +41,42 @@ void Tensor::init_random(float mean, float std){
     }
 }
 
+Tensor::Tensor()
+{
+
+}
+
 Tensor::Tensor(int r, int c, int d, float v)
 {
-	this->r = r;
-	this->c = c;
-	this->d = d;
-	data = new float[r * c * d];
-	if(v)
-		init(r, c, d, v);
+	init(r, c, d, v);
 }
 
 Tensor::Tensor(const Tensor& that)
 {
-	r = that.r;
-	c = that.c;
-	d = that.d;
-
-	int size = r * c * d;
-	data = new float[size];
-	memcpy(data, that.data, size * sizeof(float));
+	Copy(that);
 }
 
 Tensor::~Tensor()
 {
-	delete[] data;
-	data = nullptr;
+	WipeData();
 }
 
-float Tensor::operator()(int i, int j, int k) const
+float Tensor::operator()(int row, int col, int ch) const
 {
-	if(!data)
+	if(	row >= this->r || col >= this->c || ch >= this->d ||
+		row < 0 || col < 0 || ch < 0)
 		throw(index_out_of_bound());
 
-	return data[(i * c * d) + (j * d) + k];
+	return data[row][col][ch];
 }
 
-float& Tensor::operator()(int i, int j, int k)
+float& Tensor::operator()(int row, int col, int ch)
 {
-	if(!data)
+	if(	row >= this->r || col >= this->c || ch >= this->d ||
+		row < 0 || col < 0 || ch < 0)
 		throw(index_out_of_bound());
 
-	return data[(i * c * d) + (j * d) + k];
+	return data[row][col][ch];
 }
 
 Tensor Tensor::operator-(const Tensor &rhs)
@@ -92,9 +86,10 @@ Tensor Tensor::operator-(const Tensor &rhs)
 
 	Tensor result = Tensor(*this);
 
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		result.data[n] -= rhs.data[n];
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				result(row, col, ch) -= rhs(row, col, ch);
 
 	return result;
 }
@@ -106,9 +101,10 @@ Tensor Tensor::operator+(const Tensor &rhs)
 
 	Tensor result = Tensor(*this);
 
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		result.data[n] += rhs.data[n];
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				result(row, col, ch) += rhs(row, col, ch);
 
 	return result;
 }
@@ -120,9 +116,10 @@ Tensor Tensor::operator*(const Tensor &rhs)
 		
 	Tensor result = Tensor(*this);
 
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		result.data[n] *= rhs.data[n];
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				result(row, col, ch) *= rhs(row, col, ch);
 
 	return result;
 }
@@ -134,9 +131,10 @@ Tensor Tensor::operator/(const Tensor &rhs)
 		
 	Tensor result = Tensor(*this);
 
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		result.data[n] /= rhs.data[n];
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				result(row, col, ch) /= rhs(row, col, ch);
 
 	return result;
 }
@@ -145,9 +143,10 @@ Tensor Tensor::operator-(const float &rhs)
 {
 	Tensor result = Tensor(*this);
 
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		result.data[n] -= rhs;
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				result(row, col, ch) -= rhs;
 
 	return result;
 }
@@ -156,9 +155,10 @@ Tensor Tensor::operator+(const float &rhs)
 {
 	Tensor result = Tensor(*this);
 
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		result.data[n] += rhs;
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				result(row, col, ch) += rhs;
 
 	return result;
 }
@@ -167,9 +167,10 @@ Tensor Tensor::operator*(const float &rhs)
 {
 	Tensor result = Tensor(*this);
 
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		result.data[n] *= rhs;
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				result(row, col, ch) *= rhs;
 
 	return result;
 }
@@ -178,42 +179,50 @@ Tensor Tensor::operator/(const float &rhs)
 {
 	Tensor result = Tensor(*this);
 
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		result.data[n] /= rhs;
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				result(row, col, ch) /= rhs;
 
 	return result;
 }
 
 Tensor& Tensor::operator=(const Tensor &other)
 {
-	r = other.r;
-	c = other.c;
-	d = other.d;
-
-	int size = r * c * d;
-	delete[] data;
-	data = new float[size];
-	memcpy(data, other.data, size * sizeof(float));
-
+	Copy(other);
 	return *this;
 }
 
 void Tensor::init(int r, int c, int d, float v)
 {
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		data[n] = v;
+	WipeData();
+
+	this->r = r;
+	this->c = c;
+	this->d = d;
+
+	data = new float**[r];
+	for(int row = 0; row < r; row++)
+	{
+		data[row] = new float*[c];
+		for(int col = 0; col < c; col++)
+		{
+			data[row][col] = new float[d];
+			for(int ch = 0; ch < d; ch++)
+				data[row][col][ch] = v;
+		}
+	}
 }
 
 void Tensor::clamp(float low, float high)
 {
-	int size = r * c * d;
-	for(int n = 0; n < size; n++)
-		if(data[n] < low)
-			data[n] = low;
-		else if(data[n] > high)
-			data[n] = high;
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				if(operator()(row, col, ch) < low)
+					operator()(row, col, ch) = low;
+				else if(operator()(row, col, ch) > high)
+					operator()(row, col, ch) = high;
 }
 
 
@@ -232,13 +241,13 @@ int Tensor::depth()
 	return d;
 }
 
-float Tensor::getMin(int k)
+float Tensor::getMin(int ch)
 {
-	float min {operator()(0, 0, k)};
-	for(int i = 0; i < r; i++)
-		for(int j = 1; j < c; j++)
+	float min {operator()(0, 0, ch)};
+	for(int row = 0; row < r; row++)
+		for(int col = 1; col < c; col++)
 		{
-			float val = operator()(i, j, k);
+			float val = operator()(row, col, ch);
 			if(val < min)
 				min = val;
 		}
@@ -246,13 +255,13 @@ float Tensor::getMin(int k)
 	return min;
 }
 
-float Tensor::getMax(int k)
+float Tensor::getMax(int ch)
 {
-	float max {operator()(0, 0, k)};
-	for(int i = 0; i < r; i++)
-		for(int j = 1; j < c; j++)
+	float max {operator()(0, 0, ch)};
+	for(int row = 0; row < r; row++)
+		for(int col = 1; col < c; col++)
 		{
-			float val = operator()(i, j, k);
+			float val = operator()(row, col, ch);
 			if(val > max)
 				max = val;
 		}
@@ -267,10 +276,10 @@ void Tensor::showSize()
 
 ostream& operator<< (ostream& stream, const Tensor & obj)
 {
-	for(int i = 0; i < obj.r; i++)
-		for(int j = 0; j < obj.c; j++)
-			for(int k = 0; k < obj.d; k++)
-				stream << "[" << i << "," << j << "," << obj(i, j, k) << "]\n";
+	for(int row = 0; row < obj.r; row++)
+		for(int col = 0; col < obj.c; col++)
+			for(int ch = 0; ch < obj.d; ch++)
+				stream << "[" << row << "," << col << "," << obj(row, col, ch) << "]\n";
 
 	return stream;
 }
@@ -284,12 +293,13 @@ void Tensor::read_file(string filename)
 	file >> c;
 	file >> d;
 
-	delete[] data;
-	data = new float[r * c * d];
-	for(int i = 0; i < r; i++)
-		for(int j = 0; j < c; j++)
-			for(int k = 0; k < d; k++)
-				file >> operator()(i, j, k);
+	WipeData();
+	init(r, c, d);
+
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				file >> operator()(row, col, ch);
 
 	file.close();
 }
@@ -301,10 +311,49 @@ void Tensor::write_file(string filename)
 
 	file << r << '\n' << c << '\n' << d << '\n';
 
-	for(int i = 0; i < r; i++)
-		for(int j = 0; j < c; j++)
-			for(int k = 0; k < d; k++)
-				file << operator()(i, j, k) << '\n';
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				file << operator()(row, col, ch) << '\n';
 
 	file.close();
+}
+void Tensor::Copy(const Tensor& other)
+{
+	WipeData();
+
+	r = other.r;
+	c = other.c;
+	d = other.d;
+
+	data = new float**[r];
+	for(int row = 0; row < r; row++)
+	{
+		data[row] = new float*[c];
+		for(int col = 0; col < c; col++)
+		{
+			data[row][col] = new float[d];
+			for(int ch = 0; ch < d; ch++)
+				data[row][col][ch] = other.data[row][col][ch];
+		}
+	}
+}
+
+void Tensor::WipeData()
+{
+	if(data)
+	{
+		for(int row = 0; row < r; row++)
+		{
+			if(data[row])
+			{
+				for(int col = 0; col < c; col++)
+					if(data[row][col])
+						delete[] data[row][col];
+				delete[] data[row];
+			}
+		}
+		delete[] data;
+		data = nullptr;
+	}
 }
