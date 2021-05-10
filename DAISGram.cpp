@@ -179,3 +179,13 @@ DAISGram DAISGram::smooth(int h=3)
     result.data.convolve(&filter);
     return result;
 }
+
+DAISGram DAISGram::edge()
+{
+    Tensor filter;
+    filter.read_file("filters/" + "edge");
+    DAISGram result;
+    result.data = Tensor(&data);
+    result.data.convolve(&filter);
+    return result;
+}
