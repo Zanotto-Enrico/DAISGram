@@ -21,75 +21,84 @@ void show_help(){
     printf("\n");
 }
 
-int main (int argc, char * argv[]) {
+Tensor load_image(string filename)
+{
+	BmpImg img = BmpImg();
 
-    char * fn_in_1;  /* file 1 */
-    char * fn_in_2;  /* file 2 */
-    char * operation; /* operazione da eseguire */
-    char * fn_out; /* output file */
+	img.read(filename.c_str());
 
-    int k_size = 3; /* kernel size */
-    float alpha = 1.; /* alpha della blend */
+	const int h = img.get_height();
+	const int w = img.get_width();
 
-    /* variabili di appoggio per le computazioni */
-    DAISGram b, c, img;
+	Tensor result = Tensor(h, w, 3, 0.0);
 
-    if(argc<4){
-        show_help();
-        return 0;
+	for(int i=0;i<h;i++){
+		for(int j=0;j<w;j++){ 
+			result(i,j,0) = (float) img.red_at(j,i);
+			result(i,j,1) = (float) img.green_at(j,i);    
+			result(i,j,2) = (float) img.blue_at(j,i);   
+		}                
+	}
+
+	return result;
+}
+
+void save_image(Tensor data, string filename)
+{
+    data.clamp(0,255);
+
+    BmpImg img = BmpImg(data.cols(), data.rows());
+
+    img.init(data.cols(), data.rows());
+
+    for(int i=0;i<data.rows();i++){
+        for(int j=0;j<data.cols();j++){
+            img.set_pixel(j,i,(unsigned char) data(i,j,0),(unsigned char) data(i,j,1),(unsigned char) data(i,j,2));                   
+        }                
     }
 
-    fn_in_1 = argv[1];  /* file 1 */
-    fn_in_2 = argv[2];  /* file 2 */
-    operation = argv[3]; /* operazione da eseguire */
-    fn_out = argv[4]; /* output file */
+    img.write(filename);
+}
 
-    if(argc>5) {
-        k_size = atoi(argv[5]);
-    }
+void PrintTensor(Tensor& t, string name)
+{
+	cout << name << ":" << endl << endl;
 
-    if(argc>6){
-        alpha = atof(argv[6]);
-    }
+	for(int ch = 0; ch < t.depth(); ch++)
+	{
+		cout << "channel" << ch << ":" << endl;
+		for(int row = 0; row < t.rows(); row++)
+		{
+			cout << "[";
+			for(int col = 0; col < t.cols(); col++)
+				cout << t(row, col, ch) << ", ";
+			cout << "\b\b]" << endl;
+		}
+		cout << endl;
+	}
+	cout << endl << endl;
+}
 
-    b.load_image(fn_in_1);  /* leggi il file di input */
+int main (int argc, char * argv[]) 
+{
+	vector<string> imageNames {"flower_hires", "dais", "fullmoon", "seba"};
+	vector<string> filterNames {"sharpen", "smooth", "emboss"};
 
-    if (strcmp(operation, "brighten") == 0) {
-        img = b.brighten(k_size); /* aumenta la luminosità */
-    }
-    else if (strcmp(operation, "blend") == 0) {
-        cout<<alpha<<endl;
-        c.load_image(fn_in_2);        
-        img = b.blend(c, alpha); /* effettua il blending di due immagini */
-    }else if (strcmp(operation, "gray") == 0) {
-        img = b.grayscale();
-    }
-    else if (strcmp(operation, "equalize") == 0) {
-        img = b.equalize();
-    }else if (strcmp(operation, "chromakey") == 0) {
-        c.load_image(fn_in_2); 
-        int r_,g_,b_;
-        float thr,thg,thb;
-        cout<<"Enter green-screen parameters (int RGB[3]) and (float RGB Threshold[3])"<<endl;
-        cin>>r_>>g_>>b_>>thr>>thg>>thb;
-        int rgb[3]={r_,g_,b_};
-        float th[3]={thr,thg,thb};
-        img = b.greenscreen(c,rgb,th);
-    }else if (strcmp(operation, "sharp") == 0) {
-        img = b.sharpen(); 
-    }else if (strcmp(operation, "edge") == 0) {
-        img = b.edge();
-    }else if (strcmp(operation, "emboss") == 0) {
-        img = b.emboss();
-    }else if (strcmp(operation, "smooth") == 0) {
-        img = b.smooth(k_size);
-    }else if (strcmp(operation, "warhol") == 0) {
-        img = b.warhol();
-    }else {
-        throw(unknown_operation());
-    }
+	for(const auto& imageName : imageNames)
+	{
+		Tensor img = load_image("images/" + imageName + ".bmp");
+		for(const auto& filterName : filterNames)
+		{
+			cout << "Applying filter " << "\"" << filterName << "\"" << " to image " << imageName << endl;
 
-    img.save_image(fn_out);
+			Tensor filter;
+			if(filterName == "smooth")
+				filter.init(7,7,3,1/(float)49);
+			else
+				filter.read_file("filters/" + filterName);
 
-    return 0; /* ciao a tutti!*/
+			Tensor result = img.convolve(filter);
+			save_image(result, "testing/" + imageName + "/" + filterName + ".bmp");
+		}
+	}
 }

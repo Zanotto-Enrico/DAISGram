@@ -317,21 +317,21 @@ public:
      * 
      * @return the number of rows in the tensor
      */
-    int rows();
+    int rows() const;
 
     /** 
      * Cols 
      * 
      * @return the number of columns in the tensor
      */
-    int cols();
+    int cols() const;
 
     /** 
      * Depth 
      * 
      * @return the depth of the tensor
      */
-    int depth();
+    int depth() const;
     
     /** 
      * Get minimum 

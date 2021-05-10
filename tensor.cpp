@@ -227,17 +227,17 @@ void Tensor::clamp(float low, float high)
 }
 
 
-int Tensor::rows()
+int Tensor::rows() const
 {
 	return r;
 }
 
-int Tensor::cols()
+int Tensor::cols() const
 {
 	return c;
 }
 
-int Tensor::depth()
+int Tensor::depth() const
 {
 	return d;
 }

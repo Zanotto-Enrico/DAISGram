@@ -1,10 +1,15 @@
 MAIN = main
-FLAGS = -std=c++11 -lm -O3
+FLAGS = -std=c++11 -lm
+RLS =
+DBG =
 
 all: testbmp main main_tensor
 
-debug: FLAGS=-g
+debug: DBG=-g
 debug: main
+
+test: RLS=-O3
+test: main
 
 tensor.o: tensor.cpp
 	g++ tensor.cpp -o tensor.o -c $(FLAGS)
@@ -15,7 +20,7 @@ libbmp.o: libbmp.cpp
 DAISGram.o: DAISGram.cpp libbmp.o
 	g++ DAISGram.cpp -o DAISGram.o -c $(FLAGS)
 
-main: tensor.o main.cpp 
+main: libbmp.o tensor.o main.cpp 
 	g++ $^ -o $(MAIN) $(FLAGS)
 
 testbmp: test_bmplib.cpp libbmp.o
