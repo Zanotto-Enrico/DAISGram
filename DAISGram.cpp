@@ -170,3 +170,12 @@ DAISGram DAISGram::emboss()
     result.data.convolve(&filter);
     return result;
 }
+
+DAISGram DAISGram::smooth(int h=3)
+{
+    Tensor filter = Tensor(h,h,3,h*h);
+    DAISGram result;
+    result.data = Tensor(&data);
+    result.data.convolve(&filter);
+    return result;
+}
