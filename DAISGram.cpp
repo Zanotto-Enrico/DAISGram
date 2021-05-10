@@ -189,3 +189,17 @@ DAISGram DAISGram::edge()
     result.data.convolve(&filter);
     return result;
 }
+
+DAISGram DAISGram::blend(const DAISGram & rhs, float alpha=0.5)
+{
+    if(data.rows() != rhs.data.rows() || data.cols() != rhs.data.cols() || data.depth() != rhs.data.depth())
+        throw(dimension_mismatch());
+    DAISGram result;
+    result.data = Tensor(&data);
+    for (int r = 0; r < result.data.rows(); r++)
+        for (int c = 0; c < result.data.cols(); c++)
+            for (int d = 0; d < result.data.depth(); d++)
+                result.data(r,c,d) = result.data(r,c,d)*alpha + (1 - alpha)*rhs.data(r,c,d);
+
+    return result;
+}
