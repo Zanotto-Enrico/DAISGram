@@ -15,8 +15,8 @@ libbmp.o: libbmp.cpp
 DAISGram.o: DAISGram.cpp libbmp.o
 	g++ DAISGram.cpp -o DAISGram.o -c $(FLAGS)
 
-main: tensor.o DAISGram.o libbmp.o main.cpp 
-	g++ libbmp.o tensor.o DAISGram.o main.cpp -o $(MAIN) $(FLAGS)
+main: tensor.o main.cpp 
+	g++ $^ -o $(MAIN) $(FLAGS)
 
 testbmp: test_bmplib.cpp libbmp.o
 	g++ libbmp.o test_bmplib.cpp -o test_bmplib $(FLAGS)
