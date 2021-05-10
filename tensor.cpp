@@ -388,6 +388,28 @@ void Tensor::rescale(float new_max)
 			}
 }
 
+Tensor Tensor::convolve(const Tensor &f)
+{
+	int hp = (f.r - 1) / 2;
+	int wp = (f.c - 1) / 2;
+
+	Tensor padded = padding(hp, wp);
+	Tensor result(r, c, d);
+
+	for(int ch = 0; ch < d; ch++)
+		for(int p_row = hp; p_row < r + hp; p_row++)
+			for(int p_col = wp; p_col < c + wp; p_col++)
+			{
+				Tensor subs = padded.subset(p_row - hp, p_row + hp + 1, p_col - wp, p_col + wp + 1, 0, f.d);
+				subs = subs * f;
+				for(int s_row = 0; s_row < subs.r; s_row++)
+					for(int s_col = 0; s_col < subs.c; s_col++)
+						result(p_row - hp, p_col - wp, ch) += subs(s_row, s_col, ch);
+			}
+
+	return result;
+}
+
 void Tensor::Copy(const Tensor& other)
 {
 	WipeData();
