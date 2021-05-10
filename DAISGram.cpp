@@ -93,7 +93,7 @@ int DAISGram::getDepth()
 DAISGram DAISGram::brighten(float bright)
 {
     DAISGram result;
-    result.data = Tensor(data);
+    result.data = Tensor(&data);
     for (int r = 0; r < result.data.rows(); r++)
         for (int c = 0; c < result.data.cols(); c++)
             for (int d = 0; d < result.data.depth(); d++)
@@ -105,7 +105,7 @@ DAISGram DAISGram::brighten(float bright)
 DAISGram DAISGram::grayscale()
 {
     DAISGram result();
-    result.data = Tensor(data);
+    result.data = Tensor(&data);
     float mean = 0;
     for (int r = 0; r < result.data.rows(); r++)
     {
@@ -122,10 +122,10 @@ DAISGram DAISGram::grayscale()
 
 DAISGram DAISGram::warhol()
 {
-    Tensor normal    = Tensor(data);
-    Tensor RedGreen  = Tensor(data);
-    Tensor BlueGreen = Tensor(data);
-    Tensor RedBlue   = Tensor(data);
+    Tensor normal    = Tensor(&data);
+    Tensor RedGreen  = Tensor(&data);
+    Tensor BlueGreen = Tensor(&data);
+    Tensor RedBlue   = Tensor(&data);
 
     for (int r = 0; r < data.rows(); r++)
     {
@@ -148,5 +148,15 @@ DAISGram DAISGram::warhol()
     DAISGram result;
     result.data = top.concat(bottom,0);
     
+    return result;
+}
+
+DAISGram DAISGram::sharpen()
+{
+    Tensor filter;
+    filter.read_file("filters/" + "sharpen");
+    DAISGram result;
+    result.data = Tensor(&data);
+    result.convolve(&filter);
     return result;
 }
