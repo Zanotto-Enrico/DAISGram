@@ -97,5 +97,21 @@ DAISGram DAISGram::brighten(float bright)
             for (int d = 0; d < data.depth(); d++)
                 data(r,c,d) += bright;
     data.clamp(0,255);
-    return *this;
+    return DAISGram(*this);
+}
+
+DAISGram DAISGram::grayscale()
+{
+    float mean = 0;
+    for (int r = 0; r < data.rows(); r++)
+    {
+        for (int c = 0; c < data.cols(); c++)
+        {
+            mean = 0;
+            for (int d = 0; d < data.depth(); d++)  mean += data(r,c,d);
+            mean = mean/3;
+            for (int d = 0; d < data.depth(); d++)  data(r,c,d) = mean;
+        }
+    }
+    return DAISGram(*this);
 }
