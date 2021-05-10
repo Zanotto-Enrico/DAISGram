@@ -89,3 +89,13 @@ int DAISGram::getDepth()
 {
     return data.depth();
 }
+
+DAISGram DAISGram::brighten(float bright)
+{
+    for (int r = 0; r < data.rows(); r++)
+        for (int c = 0; c < data.cols(); c++)
+            for (int d = 0; d < data.depth(); d++)
+                data(r,c,d) += bright;
+    data.clamp(0,255);
+    return *this;
+}
