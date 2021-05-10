@@ -74,3 +74,18 @@ void DAISGram::generate_random(int h, int w, int d){
     data.init_random(128,50);
     data.rescale(255);
 }
+
+int DAISGram::getRows()
+{    
+    return data.rows();
+}
+
+int DAISGram::getCols()
+{
+    return data.cols();
+}
+
+int DAISGram::getDepth()
+{
+    return data.depth();
+}
