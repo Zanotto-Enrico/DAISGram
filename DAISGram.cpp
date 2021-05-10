@@ -119,3 +119,34 @@ DAISGram DAISGram::grayscale()
     }
     return result;
 }
+
+DAISGram DAISGram::warhol()
+{
+    Tensor normal    = Tensor(data);
+    Tensor RedGreen  = Tensor(data);
+    Tensor BlueGreen = Tensor(data);
+    Tensor RedBlue   = Tensor(data);
+
+    for (int r = 0; r < data.rows(); r++)
+    {
+        for (int c = 0; c < data.cols(); c++)
+        {
+            //swap red and green
+            RedGreen(r,c,0)  =  data(r,c,1);
+            RedGreen(r,c,1)  =  data(r,c,0);
+            //swap blue and green
+            BlueGreen(r,c,1) =  data(r,c,2);
+            BlueGreen(r,c,2) =  data(r,c,1);
+            //swap red and blue
+            RedBlue(r,c,0)   =  data(r,c,2);
+            RedBlue(r,c,2)   =  data(r,c,0);
+        }
+    }
+    //concateno le 4 immagini
+    Tensor top = normal.concat(RedGreen,1);
+    Tensor bottom = BlueGreen.concat(RedBlue,1);
+    DAISGram result;
+    result.data = top.concat(bottom,0);
+    
+    return result;
+}
