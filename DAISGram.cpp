@@ -92,26 +92,30 @@ int DAISGram::getDepth()
 
 DAISGram DAISGram::brighten(float bright)
 {
-    for (int r = 0; r < data.rows(); r++)
-        for (int c = 0; c < data.cols(); c++)
-            for (int d = 0; d < data.depth(); d++)
-                data(r,c,d) += bright;
-    data.clamp(0,255);
-    return DAISGram(*this);
+    DAISGram result;
+    result.data = Tensor(data);
+    for (int r = 0; r < result.data.rows(); r++)
+        for (int c = 0; c < result.data.cols(); c++)
+            for (int d = 0; d < result.data.depth(); d++)
+                result.data(r,c,d) += bright;
+    result.data.clamp(0,255);
+    return result;
 }
 
 DAISGram DAISGram::grayscale()
 {
+    DAISGram result();
+    result.data = Tensor(data);
     float mean = 0;
-    for (int r = 0; r < data.rows(); r++)
+    for (int r = 0; r < result.data.rows(); r++)
     {
-        for (int c = 0; c < data.cols(); c++)
+        for (int c = 0; c < result.data.cols(); c++)
         {
             mean = 0;
-            for (int d = 0; d < data.depth(); d++)  mean += data(r,c,d);
+            for (int d = 0; d < result.data.depth(); d++)  mean += result.data(r,c,d);
             mean = mean/3;
-            for (int d = 0; d < data.depth(); d++)  data(r,c,d) = mean;
+            for (int d = 0; d < result.data.depth(); d++)  result.data(r,c,d) = mean;
         }
     }
-    return DAISGram(*this);
+    return result;
 }
