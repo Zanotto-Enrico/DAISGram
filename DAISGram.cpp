@@ -160,3 +160,13 @@ DAISGram DAISGram::sharpen()
     result.convolve(&filter);
     return result;
 }
+
+DAISGram DAISGram::emboss()
+{
+    Tensor filter;
+    filter.read_file("filters/" + "emboss");
+    DAISGram result;
+    result.data = Tensor(&data);
+    result.data.convolve(&filter);
+    return result;
+}
