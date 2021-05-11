@@ -93,7 +93,7 @@ int DAISGram::getDepth()
 DAISGram DAISGram::brighten(float bright)
 {
     DAISGram result;
-    result.data = Tensor(&data);
+    result.data = Tensor(data);
     for (int r = 0; r < result.data.rows(); r++)
         for (int c = 0; c < result.data.cols(); c++)
             for (int d = 0; d < result.data.depth(); d++)
@@ -104,8 +104,8 @@ DAISGram DAISGram::brighten(float bright)
 
 DAISGram DAISGram::grayscale()
 {
-    DAISGram result();
-    result.data = Tensor(&data);
+    DAISGram result;
+    result.data = Tensor(data);
     float mean = 0;
     for (int r = 0; r < result.data.rows(); r++)
     {
@@ -122,10 +122,10 @@ DAISGram DAISGram::grayscale()
 
 DAISGram DAISGram::warhol()
 {
-    Tensor normal    = Tensor(&data);
-    Tensor RedGreen  = Tensor(&data);
-    Tensor BlueGreen = Tensor(&data);
-    Tensor RedBlue   = Tensor(&data);
+    Tensor normal    = Tensor(data);
+    Tensor RedGreen  = Tensor(data);
+    Tensor BlueGreen = Tensor(data);
+    Tensor RedBlue   = Tensor(data);
 
     for (int r = 0; r < data.rows(); r++)
     {
@@ -154,20 +154,20 @@ DAISGram DAISGram::warhol()
 DAISGram DAISGram::sharpen()
 {
     Tensor filter;
-    filter.read_file("filters/" + "sharpen");
+    filter.read_file("filters/sharpen");
     DAISGram result;
-    result.data = Tensor(&data);
-    result.convolve(&filter);
+    result.data = Tensor(data);
+    result.data.convolve(filter);
     return result;
 }
 
 DAISGram DAISGram::emboss()
 {
     Tensor filter;
-    filter.read_file("filters/" + "emboss");
+    filter.read_file("filters/emboss");
     DAISGram result;
-    result.data = Tensor(&data);
-    result.data.convolve(&filter);
+    result.data = Tensor(data);
+    result.data.convolve(filter);
     return result;
 }
 
@@ -175,27 +175,27 @@ DAISGram DAISGram::smooth(int h=3)
 {
     Tensor filter = Tensor(h,h,3,h*h);
     DAISGram result;
-    result.data = Tensor(&data);
-    result.data.convolve(&filter);
+    result.data = Tensor(data);
+    result.data.convolve(filter);
     return result;
 }
 
 DAISGram DAISGram::edge()
 {
     Tensor filter;
-    filter.read_file("filters/" + "edge");
+    filter.read_file("filters/edge");
     DAISGram result;
-    result.data = Tensor(&data);
-    result.data.convolve(&filter);
+    result.data = Tensor(data);
+    result.data.convolve(filter);
     return result;
 }
 
 DAISGram DAISGram::blend(const DAISGram & rhs, float alpha=0.5)
 {
-    if(data.rows() != rhs.data.rows() || data.cols() != rhs.data.cols() || data.depth() != rhs.data.depth())
+    if(data.rows() != rhs.data.rows() || data.cols() != rhs.getCols() || data.depth() != rhs.data.depth())
         throw(dimension_mismatch());
     DAISGram result;
-    result.data = Tensor(&data);
+    result.data = Tensor(data);
     for (int r = 0; r < result.data.rows(); r++)
         for (int c = 0; c < result.data.cols(); c++)
             for (int d = 0; d < result.data.depth(); d++)
