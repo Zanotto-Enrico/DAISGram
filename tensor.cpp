@@ -407,7 +407,6 @@ Tensor Tensor::convolve(const Tensor &f)const
 						result(p_row - hp, p_col - wp, ch) += subs(s_row, s_col, ch);
 			}
 
-	result.rescale(255);
 	return result;
 }
 
