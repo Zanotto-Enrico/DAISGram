@@ -220,9 +220,9 @@ DAISGram DAISGram::greenscreen(DAISGram & bkg, int rgb[], float threshold[])
     result.data = Tensor(data);
     for (int r = 0; r < result.getRows(); r++)
         for (int c = 0; c < result.getCols(); c++)
-                if( rgb[0] - threshold[0] <= result.data(r,c,0) <= rgb[0] + threshold[0] &&
-                    rgb[1] - threshold[1] <= result.data(r,c,1) <= rgb[1] + threshold[1] &&
-                    rgb[2] - threshold[2] <= result.data(r,c,2) <= rgb[2] + threshold[2]   )
+                if( (rgb[0] - threshold[0] <= result.data(r,c,0)) && (result.data(r,c,0) <= rgb[0] + threshold[0]) &&
+                    (rgb[1] - threshold[1] <= result.data(r,c,1)) && (result.data(r,c,1) <= rgb[1] + threshold[1]) &&
+                    (rgb[2] - threshold[2] <= result.data(r,c,2)) && (result.data(r,c,2) <= rgb[2] + threshold[2])   )
                 {
                     for (int d = 0; d < getDepth(); d++)
                         result.data(r,c,d) = bkg.data(r,c,d);
