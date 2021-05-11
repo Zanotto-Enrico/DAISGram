@@ -80,7 +80,7 @@ float& Tensor::operator()(int row, int col, int ch)
 	return data[row][col][ch];
 }
 
-Tensor Tensor::operator-(const Tensor &rhs)
+Tensor Tensor::operator-(const Tensor &rhs)const
 {
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
@@ -95,7 +95,7 @@ Tensor Tensor::operator-(const Tensor &rhs)
 	return result;
 }
 
-Tensor Tensor::operator+(const Tensor &rhs)
+Tensor Tensor::operator+(const Tensor &rhs)const
 {
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
@@ -110,7 +110,7 @@ Tensor Tensor::operator+(const Tensor &rhs)
 	return result;
 }
 
-Tensor Tensor::operator*(const Tensor &rhs)
+Tensor Tensor::operator*(const Tensor &rhs)const
 {
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
@@ -125,7 +125,7 @@ Tensor Tensor::operator*(const Tensor &rhs)
 	return result;
 }
 
-Tensor Tensor::operator/(const Tensor &rhs)
+Tensor Tensor::operator/(const Tensor &rhs)const
 {
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
@@ -140,7 +140,7 @@ Tensor Tensor::operator/(const Tensor &rhs)
 	return result;
 }
 
-Tensor Tensor::operator-(const float &rhs)
+Tensor Tensor::operator-(const float &rhs)const
 {
 	Tensor result = Tensor(*this);
 
@@ -152,7 +152,7 @@ Tensor Tensor::operator-(const float &rhs)
 	return result;
 }
 
-Tensor Tensor::operator+(const float &rhs)
+Tensor Tensor::operator+(const float &rhs)const
 {
 	Tensor result = Tensor(*this);
 
@@ -164,7 +164,7 @@ Tensor Tensor::operator+(const float &rhs)
 	return result;
 }
 
-Tensor Tensor::operator*(const float &rhs)
+Tensor Tensor::operator*(const float &rhs)const
 {
 	Tensor result = Tensor(*this);
 
@@ -176,7 +176,7 @@ Tensor Tensor::operator*(const float &rhs)
 	return result;
 }
 
-Tensor Tensor::operator/(const float &rhs)
+Tensor Tensor::operator/(const float &rhs)const
 {
 	Tensor result = Tensor(*this);
 
@@ -227,22 +227,22 @@ void Tensor::clamp(float low, float high)
 }
 
 
-int Tensor::rows()
+int Tensor::rows()const
 {
 	return r;
 }
 
-int Tensor::cols()
+int Tensor::cols()const
 {
 	return c;
 }
 
-int Tensor::depth()
+int Tensor::depth()const
 {
 	return d;
 }
 
-float Tensor::getMin(int ch)
+float Tensor::getMin(int ch)const
 {
 	float min {operator()(0, 0, ch)};
 	for(int row = 0; row < r; row++)
@@ -256,7 +256,7 @@ float Tensor::getMin(int ch)
 	return min;
 }
 
-float Tensor::getMax(int ch)
+float Tensor::getMax(int ch)const
 {
 	float max {operator()(0, 0, ch)};
 	for(int row = 0; row < r; row++)
@@ -270,7 +270,7 @@ float Tensor::getMax(int ch)
 	return max;
 }
 
-void Tensor::showSize()
+void Tensor::showSize()const
 {
 	cout << r << " x " << c << " x " << d << endl;
 }
@@ -320,7 +320,7 @@ void Tensor::write_file(string filename)
 	file.close();
 }
 
-Tensor Tensor::padding(int pad_h, int pad_w)
+Tensor Tensor::padding(int pad_h, int pad_w)const
 {
 	Tensor result(r + 2 * pad_h, c + 2 * pad_w, d);
 
@@ -332,7 +332,7 @@ Tensor Tensor::padding(int pad_h, int pad_w)
 	return result;
 }
 
-Tensor Tensor::subset(unsigned int row_start, unsigned int row_end, unsigned int col_start, unsigned int col_end, unsigned int depth_start, unsigned int depth_end)
+Tensor Tensor::subset(unsigned int row_start, unsigned int row_end, unsigned int col_start, unsigned int col_end, unsigned int depth_start, unsigned int depth_end)const
 {
 	Tensor result(row_end - row_start, col_end - col_start, depth_end - depth_start);
 
@@ -344,7 +344,7 @@ Tensor Tensor::subset(unsigned int row_start, unsigned int row_end, unsigned int
 	return result;
 }
 
-Tensor Tensor::concat(const Tensor &rhs, int axis)
+Tensor Tensor::concat(const Tensor &rhs, int axis)const
 {
 	if(d != rhs.d || (r != rhs.r && axis) || (c != rhs.c && !axis))
 		throw(concat_wrong_dimension());
@@ -388,7 +388,7 @@ void Tensor::rescale(float new_max)
 			}
 }
 
-Tensor Tensor::convolve(const Tensor &f)
+Tensor Tensor::convolve(const Tensor &f)const
 {
 	int hp = (f.r - 1) / 2;
 	int wp = (f.c - 1) / 2;
