@@ -15,7 +15,7 @@ release: main
 
 
 main: main.cpp tensor.o DAISGram.o libbmp.o 
-	g++ $< $(EXEPATH)/tensor.o $(EXEPATH)/DAISGram.o $(EXEPATH)/libbmp.o $(FLAGS) $(ADFLAG) -o $(EXEPATH)/$@
+	g++ $< $(EXEPATH)/tensor.o $(EXEPATH)/DAISGram.o $(EXEPATH)/libbmp.o $(FLAGS) $(ADFLAG) -o $(EXEPATH)/$(EXE)
 
 tensor.o: tensor.cpp
 	g++ $^ $(FLAGS) $(ADFLAG) -c -o $(EXEPATH)/$@
