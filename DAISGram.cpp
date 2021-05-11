@@ -8,6 +8,16 @@
 
 using namespace std;
 
+DAISGram::DAISGram()
+{
+	
+}
+
+DAISGram::~DAISGram()
+{
+	
+}
+
 /**
  * Load a bitmap from file
  *
@@ -171,7 +181,7 @@ DAISGram DAISGram::emboss()
     return result;
 }
 
-DAISGram DAISGram::smooth(int h=3)
+DAISGram DAISGram::smooth(int h)
 {
     Tensor filter = Tensor(h,h,3,h*h);
     DAISGram result;
@@ -190,7 +200,7 @@ DAISGram DAISGram::edge()
     return result;
 }
 
-DAISGram DAISGram::blend(const DAISGram & rhs, float alpha=0.5)
+DAISGram DAISGram::blend(const DAISGram & rhs, float alpha)
 {
     if(getRows() != rhs.data.rows() || getCols() != rhs.data.cols() || getDepth() != rhs.data.depth())
         throw(dimension_mismatch());
