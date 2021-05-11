@@ -3,7 +3,6 @@
 #include <random>
 #include <math.h>
 #include <fstream>
-#include <vector>
 
 #include "dais_exc.h"
 #include "tensor.h"
@@ -370,22 +369,16 @@ Tensor Tensor::concat(const Tensor &rhs, int axis)const
 }
 
 void Tensor::rescale(float new_max)
-{
-	vector<float>mins, maxs;
+{	
 	for(int ch = 0; ch < d; ch++)
 	{
-		mins.push_back(getMin(ch));
-		maxs.push_back(getMax(ch));
-	}
-	
-	for(int row = 0; row < r; row++)
-		for(int col = 0; col < c; col++)
-			for(int ch = 0; ch < d; ch++)
-			{
-				float min = mins.at(ch);
-				float max = maxs.at(ch);
+		float min = getMin(ch);
+		float max = getMax(ch);
+		
+		for(int row = 0; row < r; row++)
+			for(int col = 0; col < c; col++)
 				operator()(row, col, ch) = ((operator()(row, col, ch)-min)/(max-min))*new_max;
-			}
+	}
 }
 
 Tensor Tensor::convolve(const Tensor &f)const
