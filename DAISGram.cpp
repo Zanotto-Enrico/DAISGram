@@ -219,3 +219,46 @@ DAISGram DAISGram::greenscreen(DAISGram & bkg, int rgb[], float threshold[])
                 }            
     return result;
 }
+
+DAISGram DAISGram::equalize()
+{
+    DAISGram result;
+    result.data = Tensor(data);
+    float maxValue = 0, minValue = 0;
+    float cdfMin = 0, cdfMax = 0;
+
+    for (int i = 0; i < 3; i++)//per ogni livello di depth del tensore
+    {
+        maxValue = result.data.getMax(i);
+        minValue = result.data.getMin(i);
+        int DistLenght = maxValue-minValue+1;
+        int *Distribution = new int[DistLenght];
+
+        //calcolo dell'istogramma
+        for (int r = 0; r < result.getRows(); r++)
+            for (int c = 0; c < result.getCols(); c++)
+                {
+                    int value = result.data(r,c,i)- minValue;
+                    Distribution[value] += 1;
+                }
+
+        //calcolo della distribuzione
+        int cdf = 0; 
+        cdfMin = Distribution[0]; 
+        for (int j = 0; j < DistLenght; j++){
+            Distribution[j] += cdf;
+            cdf += (Distribution[j] - cdf);
+        }
+        cdfMax = Distribution[DistLenght - 1] - 1;
+        
+        //sostituzione dei pixels
+        for (int r = 0; r < result.getRows(); r++)
+            for (int c = 0; c < result.getCols(); c++)
+                {
+                    int Pos = result.data(r,c,i) - minValue;
+                    result.data(r,c,i) = round(((Distribution[Pos] - cdfMin) * 255)/cdfMax);   
+                }
+        delete[] Distribution;
+    }
+    return result;
+}
