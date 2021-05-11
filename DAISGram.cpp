@@ -166,8 +166,7 @@ DAISGram DAISGram::sharpen()
     Tensor filter;
     filter.read_file("filters/sharpen");
     DAISGram result;
-    result.data = Tensor(data);
-    result.data.convolve(filter);
+    result.data = Tensor(data).convolve(filter);
     return result;
 }
 
@@ -176,8 +175,7 @@ DAISGram DAISGram::emboss()
     Tensor filter;
     filter.read_file("filters/emboss");
     DAISGram result;
-    result.data = Tensor(data);
-    result.data.convolve(filter);
+    result.data = Tensor(data).convolve(filter);
     return result;
 }
 
@@ -185,8 +183,7 @@ DAISGram DAISGram::smooth(int h)
 {
     Tensor filter = Tensor(h,h,3,h*h);
     DAISGram result;
-    result.data = Tensor(data);
-    result.data.convolve(filter);
+    result.data = Tensor(data).convolve(filter);
     return result;
 }
 
@@ -195,8 +192,7 @@ DAISGram DAISGram::edge()
     Tensor filter;
     filter.read_file("filters/edge");
     DAISGram result;
-    result.data = Tensor(data);
-    result.data.convolve(filter);
+    result.data = Tensor(data).convolve(filter);
     return result;
 }
 
