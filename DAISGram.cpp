@@ -192,7 +192,7 @@ DAISGram DAISGram::edge()
 
 DAISGram DAISGram::blend(const DAISGram & rhs, float alpha=0.5)
 {
-    if(getRows() != rhs.getRows() || getCols() != rhs.getCols() || getDepth() != rhs.getDepth())
+    if(getRows() != rhs.data.rows() || getCols() != rhs.data.cols() || getDepth() != rhs.data.depth())
         throw(dimension_mismatch());
     DAISGram result;
     result.data = Tensor(data);
