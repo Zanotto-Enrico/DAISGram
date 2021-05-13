@@ -21,75 +21,74 @@ void show_help(){
     printf("\n");
 }
 
+enum Filter { sharpen, smooth3, smooth5, smooth7, emboss, edge, grey, brighten20, brighten100};
+
 int main (int argc, char * argv[]) {
 
-    char * fn_in_1;  /* file 1 */
-    char * fn_in_2;  /* file 2 */
-    char * operation; /* operazione da eseguire */
-    char * fn_out; /* output file */
-
-    int k_size = 3; /* kernel size */
-    float alpha = 1.; /* alpha della blend */
-
-    /* variabili di appoggio per le computazioni */
     DAISGram b, c, img;
 
-    if(argc<4){
-        show_help();
-        return 0;
+    vector<string> imageNames {"flower_hires", "dais", "fullmoon", "seba"};
+	vector<Filter> filterNames {sharpen, smooth3, smooth5, smooth7, emboss, edge, grey, brighten20, brighten100};
+
+	for(const auto& imageName : imageNames)
+	{
+		b.load_image("images/" + imageName + ".bmp");
+		for(const auto& filterName : filterNames)
+		{
+            cout << "Applying filter " << "\"" << filterName << "\"" << " to image " << imageName << endl;
+            string Fname = "";
+            switch (filterName)
+            {
+                case sharpen:       img = b.sharpen();      Fname = "sharpen";  break;
+                case smooth3:       img = b.smooth(3);      Fname = "smooth3";   break;
+                case smooth5:       img = b.smooth(5);      Fname = "smooth5";   break;
+                case smooth7:       img = b.smooth(7);      Fname = "smooth7";   break;
+                case emboss:        img = b.emboss();       Fname = "emboss";   break;
+                case edge:          img = b.edge();         Fname = "edge";     break;
+                case grey:          img = b.grayscale();    Fname = "grayscale";     break;
+                case brighten20:    img = b.brighten(20);   Fname = "bighten20";     break;
+                case brighten100:   img = b.brighten(100);  Fname = "brighten100";     break;
+            }
+            img.save_image("testing/basic_filters/" + imageName + "/" + Fname + ".bmp");
+        }
     }
 
-    fn_in_1 = argv[1];  /* file 1 */
-    fn_in_2 = argv[2];  /* file 2 */
-    operation = argv[3]; /* operazione da eseguire */
-    fn_out = argv[4]; /* output file */
+    b.load_image("images/equalize/hill.bmp");
+    c.load_image("images/fullmoon.bmp");
+    img = b.equalize();
+    img.save_image("testing/hill_equalized.bmp");
+    img = c.equalize();
+    img.save_image("testing/fullmoon_equalized.bmp");
 
-    if(argc>5) {
-        k_size = atoi(argv[5]);
+    b.load_image("images/dais.bmp");
+    img = b.warhol();
+    img.save_image("testing/warhol.bmp");
+
+    b.load_image("images/blend/blend_a.bmp");
+    c.load_image("images/blend/blend_b.bmp");
+    float alpha = 0.0F;
+    while (alpha <= 1)
+    {
+        img = b.blend(c,alpha);
+        img.save_image("testing/blend_"+ to_string(alpha).substr(0,4) +".bmp");
+        alpha += 0.25F;
     }
 
-    if(argc>6){
-        alpha = atof(argv[6]);
-    }
+    b.load_image("images/greenscreen/gs_2.bmp");
+    c.load_image("images/greenscreen/gs_2_bkg.bmp");
+    int rgb[3]={144, 208, 49};
+    float th[3]={100, 100, 50};
+    img = b.greenscreen(c,rgb,th);
+    img.save_image("testing/dais_matrix.bmp");
 
-    b.load_image(fn_in_1);  /* leggi il file di input */
+    b.load_image("images/greenscreen/gs_4.bmp");
+    c.load_image("images/greenscreen/gs_4_bkg.bmp");
+    int rgb1[3]={226,225,220};
+    float th1[3]={50, 50, 50};
+    img = b.greenscreen(c,rgb1,th1);
+    img.save_image("testing/seba_flower.bmp");
 
-    if (strcmp(operation, "brighten") == 0) {
-        img = b.brighten(k_size); /* aumenta la luminosità */
-    }
-    else if (strcmp(operation, "blend") == 0) {
-        cout<<alpha<<endl;
-        c.load_image(fn_in_2);        
-        img = b.blend(c, alpha); /* effettua il blending di due immagini */
-    }else if (strcmp(operation, "gray") == 0) {
-        img = b.grayscale();
-    }
-    else if (strcmp(operation, "equalize") == 0) {
-        img = b.equalize();
-    }else if (strcmp(operation, "chromakey") == 0) {
-        c.load_image(fn_in_2); 
-        int r_,g_,b_;
-        float thr,thg,thb;
-        cout<<"Enter green-screen parameters (int RGB[3]) and (float RGB Threshold[3])"<<endl;
-        cin>>r_>>g_>>b_>>thr>>thg>>thb;
-        int rgb[3]={r_,g_,b_};
-        float th[3]={thr,thg,thb};
-        img = b.greenscreen(c,rgb,th);
-    }else if (strcmp(operation, "sharp") == 0) {
-        img = b.sharpen(); 
-    }else if (strcmp(operation, "edge") == 0) {
-        img = b.edge();
-    }else if (strcmp(operation, "emboss") == 0) {
-        img = b.emboss();
-    }else if (strcmp(operation, "smooth") == 0) {
-        img = b.smooth(k_size);
-    }else if (strcmp(operation, "warhol") == 0) {
-        img = b.warhol();
-    }else {
-        throw(unknown_operation());
-    }
 
-    img.save_image(fn_out);
 
     return 0; /* ciao a tutti!*/
 }
