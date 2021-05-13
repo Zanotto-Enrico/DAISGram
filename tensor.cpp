@@ -389,17 +389,25 @@ Tensor Tensor::convolve(const Tensor &f)const
 	Tensor padded = padding(hp, wp);
 	Tensor result(r, c, d);
 
-	for(int ch = 0; ch < d; ch++)
-		for(int p_row = hp; p_row < r + hp; p_row++)
-			for(int p_col = wp; p_col < c + wp; p_col++)
-			{
-				Tensor subs = padded.subset(p_row - hp, p_row + hp + 1, p_col - wp, p_col + wp + 1, 0, f.d);
-				subs = subs * f;
-				for(int s_row = 0; s_row < subs.r; s_row++)
-					for(int s_col = 0; s_col < subs.c; s_col++)
-						result(p_row - hp, p_col - wp, ch) += subs(s_row, s_col, ch);
-			}
+	for(int p_row = hp; p_row < r + hp; p_row++)
+	{
+		int resultRow = p_row - hp; //result row == upper bound
+		int lowerBound = p_row + hp + 1;
 
+		for(int p_col = wp; p_col < c + wp; p_col++)
+		{
+			int resultCol = p_col - wp; //result col == left bound
+
+			Tensor subs = padded.subset(resultRow, lowerBound, resultCol, p_col + wp + 1, 0, f.d);
+			subs = subs * f;
+
+			for(int s_row = 0; s_row < subs.r; s_row++)
+				for(int s_col = 0; s_col < subs.c; s_col++)
+					for(int ch = 0; ch < d; ch++)
+						result(resultRow, resultCol, ch) += subs(s_row, s_col, ch);
+		}
+	}
+	
 	return result;
 }
 
