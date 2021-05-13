@@ -181,7 +181,7 @@ DAISGram DAISGram::emboss()
 
 DAISGram DAISGram::smooth(int h)
 {
-    Tensor filter = Tensor(h,h,3,h*h);
+    Tensor filter = Tensor(h,h,3,(float)1/(float)(h*h));
     DAISGram result;
     result.data = Tensor(data).convolve(filter);
     return result;
