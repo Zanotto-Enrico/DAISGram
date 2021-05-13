@@ -250,19 +250,19 @@ DAISGram DAISGram::equalize()
 
         //calcolo della distribuzione
         int cdf = 0; 
-        cdfMin = Distribution[0]; 
         for (int j = 0; j < DistLenght; j++){
             Distribution[j] += cdf;
             cdf = Distribution[j];
         }
-        cdfMax = Distribution[DistLenght - 1] - 1;
         
         //sostituzione dei pixels
+        cdfMin = Distribution[0]; 
+        cdfMax = Distribution[DistLenght - 1];
         for (int row = 0; row < result.getRows(); row++)
             for (int col = 0; col < result.getCols(); col++)
                 {
                     int Pos = result.data(row,col,ch) - minValue;
-                    result.data(row,col,ch) = round(((Distribution[Pos] - cdfMin) * 255)/cdfMax);   
+                    result.data(row,col,ch) = round(((Distribution[Pos] - cdfMin) / (cdfMax - cdfMin)) * 255);   
                 }
         delete[] Distribution;
     }
