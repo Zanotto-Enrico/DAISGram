@@ -381,6 +381,11 @@ void Tensor::rescale(float new_max)
 	}
 }
 
+/*
+	p_ = padded
+	s_ = subsection
+	r_ = result
+*/
 Tensor Tensor::convolve(const Tensor &f)const
 {
 	int hp = (f.r - 1) / 2;
@@ -389,22 +394,24 @@ Tensor Tensor::convolve(const Tensor &f)const
 	Tensor padded = padding(hp, wp);
 	Tensor result(r, c, d);
 
-	for(int p_row = hp; p_row < r + hp; p_row++)
+	int p_lastRow = r + hp;
+	int p_lastCol = c + wp;
+
+	for(int p_row = hp; p_row < p_lastRow; p_row++)
 	{
-		int resultRow = p_row - hp; //result row == upper bound
+		int r_row = p_row - hp; //result row == upper bound
 		int lowerBound = p_row + hp + 1;
 
-		for(int p_col = wp; p_col < c + wp; p_col++)
+		for(int p_col = wp; p_col < p_lastCol; p_col++)
 		{
-			int resultCol = p_col - wp; //result col == left bound
+			int r_col = p_col - wp; //result col == left bound
 
-			Tensor subs = padded.subset(resultRow, lowerBound, resultCol, p_col + wp + 1, 0, f.d);
-			subs = subs * f;
+			Tensor subs = padded.subset(r_row, lowerBound, r_col, p_col + wp + 1, 0, f.d) * f;
 
 			for(int s_row = 0; s_row < subs.r; s_row++)
 				for(int s_col = 0; s_col < subs.c; s_col++)
 					for(int ch = 0; ch < d; ch++)
-						result(resultRow, resultCol, ch) += subs(s_row, s_col, ch);
+						result(r_row, r_col, ch) += subs(s_row, s_col, ch);
 		}
 	}
 	
