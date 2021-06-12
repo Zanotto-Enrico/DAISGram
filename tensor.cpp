@@ -58,7 +58,7 @@ Tensor::Tensor(const Tensor& that)
 
 Tensor::~Tensor()
 {
-	WipeData();
+	delete[] data;
 }
 
 float Tensor::operator()(int row, int col, int ch) const
@@ -67,7 +67,7 @@ float Tensor::operator()(int row, int col, int ch) const
 		row < 0 || col < 0 || ch < 0)
 		throw(index_out_of_bound());
 
-	return data[row][col][ch];
+	return data[row * c * d + col * d + ch];
 }
 
 float& Tensor::operator()(int row, int col, int ch)
@@ -76,7 +76,7 @@ float& Tensor::operator()(int row, int col, int ch)
 		row < 0 || col < 0 || ch < 0)
 		throw(index_out_of_bound());
 
-	return data[row][col][ch];
+	return data[row * c * d + col * d + ch];
 }
 
 Tensor Tensor::operator-(const Tensor &rhs)const
@@ -195,23 +195,16 @@ Tensor& Tensor::operator=(const Tensor &other)
 
 void Tensor::init(int r, int c, int d, float v)
 {
-	WipeData();
+	delete[] data;
 
 	this->r = r;
 	this->c = c;
 	this->d = d;
 
-	data = new float**[r];
-	for(int row = 0; row < r; row++)
-	{
-		data[row] = new float*[c];
-		for(int col = 0; col < c; col++)
-		{
-			data[row][col] = new float[d];
-			for(int ch = 0; ch < d; ch++)
-				data[row][col][ch] = v;
-		}
-	}
+	int dim = r * c * d;
+	data = new float[dim];
+	for(int i = 0; i < dim; i++)
+		data[i] = v;
 }
 
 void Tensor::clamp(float low, float high)
@@ -293,7 +286,7 @@ void Tensor::read_file(string filename)
 	file >> c;
 	file >> d;
 
-	WipeData();
+	delete[] data;
 	init(r, c, d);
 
 	for(int row = 0; row < r; row++)
@@ -325,8 +318,8 @@ Tensor Tensor::padding(int pad_h, int pad_w)const
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
-			for(int dep = 0; dep < d; dep++)
-				result(row + pad_h, col + pad_w, dep) = operator()(row, col, dep);
+			for(int ch = 0; ch < d; ch++)
+				result(row + pad_h, col + pad_w, ch) = operator()(row, col, ch);
 
 	return result;
 }
@@ -394,6 +387,7 @@ Tensor Tensor::convolve(const Tensor &f)const
 	Tensor padded = padding(hp, wp);
 	Tensor result(r, c, d);
 
+
 	int p_lastRow = r + hp;
 	int p_lastCol = c + wp;
 
@@ -420,40 +414,14 @@ Tensor Tensor::convolve(const Tensor &f)const
 
 void Tensor::Copy(const Tensor& other)
 {
-	WipeData();
+	delete[] data;
 
 	r = other.r;
 	c = other.c;
 	d = other.d;
 
-	data = new float**[r];
-	for(int row = 0; row < r; row++)
-	{
-		data[row] = new float*[c];
-		for(int col = 0; col < c; col++)
-		{
-			data[row][col] = new float[d];
-			for(int ch = 0; ch < d; ch++)
-				data[row][col][ch] = other.data[row][col][ch];
-		}
-	}
-}
-
-void Tensor::WipeData()
-{
-	if(data)
-	{
-		for(int row = 0; row < r; row++)
-		{
-			if(data[row])
-			{
-				for(int col = 0; col < c; col++)
-					if(data[row][col])
-						delete[] data[row][col];
-				delete[] data[row];
-			}
-		}
-		delete[] data;
-		data = nullptr;
-	}
+	int dim = r * c * d;
+	data = new float[dim];
+	for(int i = 0; i < dim; i++)
+		data[i] = other.data[i];
 }
