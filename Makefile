@@ -1,41 +1,28 @@
-EXE = DAISGram
-FLAGS = -std=c++11 -Wall -pedantic -lm
-ADFLAG =
-EXEPATH =
+MAIN = main
+FLAGS = -std=c++11 -lm -O3
 
-all: test_bmplib main main_tensor
+all: testbmp main main_tensor
 
-debug: ADFLAG =-g
-debug: EXEPATH =bin/debug
+debug: FLAGS=-g
 debug: main
 
-release: ADFLAG =-O3
-release: EXEPATH =bin/release
-release: main
-
-
-main: main.cpp tensor.o DAISGram.o libbmp.o 
-	g++ $< $(EXEPATH)/tensor.o $(EXEPATH)/DAISGram.o $(EXEPATH)/libbmp.o $(FLAGS) $(ADFLAG) -o $(EXEPATH)/$(EXE)
-
 tensor.o: tensor.cpp
-	g++ $^ $(FLAGS) $(ADFLAG) -c -o $(EXEPATH)/$@
+	g++ tensor.cpp -o tensor.o -c $(FLAGS)
 
 libbmp.o: libbmp.cpp
-	g++ $^ $(FLAGS) $(ADFLAG) -c -o $(EXEPATH)/$@  
+	g++ libbmp.cpp -o libbmp.o -c $(FLAGS)
 
 DAISGram.o: DAISGram.cpp libbmp.o
-	g++ $< $(FLAGS) $(ADFLAG) -c -o $(EXEPATH)/$@  
+	g++ DAISGram.cpp -o DAISGram.o -c $(FLAGS)
 
-test_bmplib: test_bmplib.cpp libbmp.o
-	g++ $^ $(FLAGS) -o $< 
+main: tensor.o DAISGram.o libbmp.o main.cpp 
+	g++ libbmp.o tensor.o DAISGram.o main.cpp -o $(MAIN) $(FLAGS)
+
+testbmp: test_bmplib.cpp libbmp.o
+	g++ libbmp.o test_bmplib.cpp -o test_bmplib $(FLAGS)
 
 main_tensor: tensor.o main_tensor.cpp 
-	g++ $^ $(FLAGS) -o $< 
+	g++ tensor.o main_tensor.cpp -o main_tensor $(FLAGS)
 
-cleandbg:
-	rm bin/debug/*.o 
-	rm bin/debug/$(EXE)
-
-cleanrls:
-	rm bin/release/*.o 
-	rm bin/debug/$(EXE)
+clean:
+	rm $(MAIN) *.o 

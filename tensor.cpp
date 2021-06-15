@@ -10,7 +10,6 @@
 #define PI 3.141592654
 #define FLT_MAX 3.402823466e+38F /* max value */
 #define FLT_MIN 1.175494351e-38F /* min positive value */
-#define EPSILON 0.000001f  /* the rounding precision for comparing floats */
 
 using namespace std;
 
