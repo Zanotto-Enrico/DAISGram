@@ -192,7 +192,7 @@ DAISGram DAISGram::edge()
     Tensor filter;
     filter.read_file("filters/edge");
     DAISGram result;
-    result.data = Tensor(data).convolve(filter);
+    result.data = Tensor(grayscale().data).convolve(filter);
     return result;
 }
 
