@@ -10,6 +10,7 @@
 #define PI 3.141592654
 #define FLT_MAX 3.402823466e+38F /* max value */
 #define FLT_MIN 1.175494351e-38F /* min positive value */
+#define EPSILON 0.000001f  /* the rounding precision for comparing floats */
 
 using namespace std;
 
@@ -59,6 +60,19 @@ Tensor::Tensor(const Tensor& that)
 Tensor::~Tensor()
 {
 	delete[] data;
+}
+
+bool Tensor::operator==(const Tensor& rhs) const
+{
+	if(r != rhs.r || c != rhs.c || d != rhs.d)
+		throw dimension_mismatch();
+	float maxdiff = 0;
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				if(abs(operator()(row, col, ch) - rhs(row, col, ch)) > EPSILON)
+					return false;
+	return true;
 }
 
 float Tensor::operator()(int row, int col, int ch) const

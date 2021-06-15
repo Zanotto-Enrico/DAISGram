@@ -27,6 +27,7 @@ private:
     int c = 0;  // number of columns
     int d = 0;  // tensor depth
 
+	void Copy(const Tensor& that);
 public:
 
     /**
