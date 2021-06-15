@@ -3,7 +3,6 @@
 #include <random>
 #include <math.h>
 #include <fstream>
-#include <vector>
 
 #include "dais_exc.h"
 #include "tensor.h"
@@ -11,6 +10,7 @@
 #define PI 3.141592654
 #define FLT_MAX 3.402823466e+38F /* max value */
 #define FLT_MIN 1.175494351e-38F /* min positive value */
+#define EPSILON 0.000001f  /* the rounding precision for comparing floats */
 
 using namespace std;
 
@@ -59,25 +59,45 @@ Tensor::Tensor(const Tensor& that)
 
 Tensor::~Tensor()
 {
-	WipeData();
+	delete[] data;
+}
+
+bool Tensor::operator==(const Tensor& rhs) const
+{
+	if(r != rhs.r || c != rhs.c || d != rhs.d)
+		throw dimension_mismatch();
+
+	float maxdiff = 0;
+	for(int row = 0; row < r; row++)
+		for(int col = 0; col < c; col++)
+			for(int ch = 0; ch < d; ch++)
+				if(abs(operator()(row, col, ch) - rhs(row, col, ch)) > EPSILON)
+					return false;
+	return true;
 }
 
 float Tensor::operator()(int row, int col, int ch) const
 {
+	if(!data)
+		throw tensor_not_initialized();
+	
 	if(	row >= this->r || col >= this->c || ch >= this->d ||
 		row < 0 || col < 0 || ch < 0)
 		throw(index_out_of_bound());
 
-	return data[row][col][ch];
+	return data[row * c * d + col * d + ch];
 }
 
 float& Tensor::operator()(int row, int col, int ch)
 {
+	if(!data)
+		throw tensor_not_initialized();
+	
 	if(	row >= this->r || col >= this->c || ch >= this->d ||
 		row < 0 || col < 0 || ch < 0)
 		throw(index_out_of_bound());
 
-	return data[row][col][ch];
+	return data[row * c * d + col * d + ch];
 }
 
 Tensor Tensor::operator-(const Tensor &rhs)const
@@ -85,7 +105,7 @@ Tensor Tensor::operator-(const Tensor &rhs)const
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
 
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -100,7 +120,7 @@ Tensor Tensor::operator+(const Tensor &rhs)const
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
 
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -115,7 +135,7 @@ Tensor Tensor::operator*(const Tensor &rhs)const
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
 		
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -130,7 +150,7 @@ Tensor Tensor::operator/(const Tensor &rhs)const
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
 		
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -142,7 +162,7 @@ Tensor Tensor::operator/(const Tensor &rhs)const
 
 Tensor Tensor::operator-(const float &rhs)const
 {
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -154,7 +174,7 @@ Tensor Tensor::operator-(const float &rhs)const
 
 Tensor Tensor::operator+(const float &rhs)const
 {
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -166,7 +186,7 @@ Tensor Tensor::operator+(const float &rhs)const
 
 Tensor Tensor::operator*(const float &rhs)const
 {
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -178,7 +198,7 @@ Tensor Tensor::operator*(const float &rhs)const
 
 Tensor Tensor::operator/(const float &rhs)const
 {
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -196,23 +216,19 @@ Tensor& Tensor::operator=(const Tensor &other)
 
 void Tensor::init(int r, int c, int d, float v)
 {
-	WipeData();
+	if((r <= 0 || c <= 0 || d <= 0))
+		throw unknown_exception();
+
+	delete[] data;
 
 	this->r = r;
 	this->c = c;
 	this->d = d;
 
-	data = new float**[r];
-	for(int row = 0; row < r; row++)
-	{
-		data[row] = new float*[c];
-		for(int col = 0; col < c; col++)
-		{
-			data[row][col] = new float[d];
-			for(int ch = 0; ch < d; ch++)
-				data[row][col][ch] = v;
-		}
-	}
+	int dim = r * c * d;
+	data = new float[dim];
+	for(int i = 0; i < dim; i++)
+		data[i] = v;
 }
 
 void Tensor::clamp(float low, float high)
@@ -290,11 +306,13 @@ void Tensor::read_file(string filename)
 	ifstream file;
 	file.open (filename);
 
+	if(file.rdstate() && file.failbit)
+		throw unable_to_read_file();
+
 	file >> r;
 	file >> c;
 	file >> d;
 
-	WipeData();
 	init(r, c, d);
 
 	for(int row = 0; row < r; row++)
@@ -326,8 +344,8 @@ Tensor Tensor::padding(int pad_h, int pad_w)const
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
-			for(int dep = 0; dep < d; dep++)
-				result(row + pad_h, col + pad_w, dep) = operator()(row, col, dep);
+			for(int ch = 0; ch < d; ch++)
+				result(row + pad_h, col + pad_w, ch) = operator()(row, col, ch);
 
 	return result;
 }
@@ -349,6 +367,8 @@ Tensor Tensor::concat(const Tensor &rhs, int axis)const
 	if(d != rhs.d || (r != rhs.r && axis) || (c != rhs.c && !axis))
 		throw(concat_wrong_dimension());
 	
+	if(axis != 0 && axis != 1)
+		throw unknown_operation();
 	
 	Tensor result;
 	if(axis)
@@ -370,83 +390,77 @@ Tensor Tensor::concat(const Tensor &rhs, int axis)const
 }
 
 void Tensor::rescale(float new_max)
-{
-	vector<float>mins, maxs;
-	for(int ch = 0; ch < d; ch++)
+{	
+	int ch = 0;
+	while(ch < d)
 	{
-		mins.push_back(getMin(ch));
-		maxs.push_back(getMax(ch));
+		float min = getMin(ch);
+		float max = getMax(ch);
+
+		if(max != min)
+		{
+			for(int row = 0; row < r; row++)
+				for(int col = 0; col < c; col++)
+					operator()(row, col, ch) = ((operator()(row, col, ch)-min)/(max-min))*new_max;
+		}
+		ch++;
 	}
-	
-	for(int row = 0; row < r; row++)
-		for(int col = 0; col < c; col++)
-			for(int ch = 0; ch < d; ch++)
-			{
-				float min = mins.at(ch);
-				float max = maxs.at(ch);
-				operator()(row, col, ch) = ((operator()(row, col, ch)-min)/(max-min))*new_max;
-			}
 }
 
+/*
+	p_ = padded
+	s_ = subsection
+	r_ = result
+*/
 Tensor Tensor::convolve(const Tensor &f)const
 {
+	if(f.depth() != d)
+		throw dimension_mismatch();
+
+	if(!(f.rows() % 2) || !(f.cols() % 2))
+		throw filter_odd_dimensions();
+	
 	int hp = (f.r - 1) / 2;
 	int wp = (f.c - 1) / 2;
 
 	Tensor padded = padding(hp, wp);
 	Tensor result(r, c, d);
 
-	for(int ch = 0; ch < d; ch++)
-		for(int p_row = hp; p_row < r + hp; p_row++)
-			for(int p_col = wp; p_col < c + wp; p_col++)
-			{
-				Tensor subs = padded.subset(p_row - hp, p_row + hp + 1, p_col - wp, p_col + wp + 1, 0, f.d);
-				subs = subs * f;
-				for(int s_row = 0; s_row < subs.r; s_row++)
-					for(int s_col = 0; s_col < subs.c; s_col++)
-						result(p_row - hp, p_col - wp, ch) += subs(s_row, s_col, ch);
-			}
 
-	//TODO: clamp/rescale?
+	int p_lastRow = r + hp;
+	int p_lastCol = c + wp;
+
+	for(int p_row = hp; p_row < p_lastRow; p_row++)
+	{
+		int r_row = p_row - hp; //result row == upper bound
+		int lowerBound = p_row + hp + 1;
+
+		for(int p_col = wp; p_col < p_lastCol; p_col++)
+		{
+			int r_col = p_col - wp; //result col == left bound
+
+			Tensor subs = padded.subset(r_row, lowerBound, r_col, p_col + wp + 1, 0, f.d) * f;
+
+			for(int s_row = 0; s_row < subs.r; s_row++)
+				for(int s_col = 0; s_col < subs.c; s_col++)
+					for(int ch = 0; ch < d; ch++)
+						result(r_row, r_col, ch) += subs(s_row, s_col, ch);
+		}
+	}
+	
 	return result;
 }
 
 void Tensor::Copy(const Tensor& other)
 {
-	WipeData();
+	delete[] data;
 
 	r = other.r;
 	c = other.c;
 	d = other.d;
 
-	data = new float**[r];
-	for(int row = 0; row < r; row++)
-	{
-		data[row] = new float*[c];
-		for(int col = 0; col < c; col++)
-		{
-			data[row][col] = new float[d];
-			for(int ch = 0; ch < d; ch++)
-				data[row][col][ch] = other.data[row][col][ch];
-		}
-	}
-}
-
-void Tensor::WipeData()
-{
-	if(data)
-	{
-		for(int row = 0; row < r; row++)
-		{
-			if(data[row])
-			{
-				for(int col = 0; col < c; col++)
-					if(data[row][col])
-						delete[] data[row][col];
-				delete[] data[row];
-			}
-		}
-		delete[] data;
-		data = nullptr;
-	}
+	int dim = r * c * d;
+	data = new float[dim];
+	for(int i = 0; i < dim; i++)
+		data[i] = other.data[i];
 }
