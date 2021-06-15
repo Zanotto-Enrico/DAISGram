@@ -31,6 +31,9 @@ void DAISGram::load_image(string filename){
     const int h = img.get_height();
     const int w = img.get_width();
 
+	if(!h || !w)
+		throw unable_to_read_file();
+	
     data = Tensor(h, w, 3, 0.0);
 
     for(int i=0;i<img.get_height();i++){
@@ -103,28 +106,27 @@ int DAISGram::getDepth()
 DAISGram DAISGram::brighten(float bright)
 {
     DAISGram result;
-    result.data = Tensor(data);
-    for (int r = 0; r < result.data.rows(); r++)
-        for (int c = 0; c < result.data.cols(); c++)
-            for (int d = 0; d < result.data.depth(); d++)
+    result.data = data;
+    for (int r = 0; r < result.getRows(); r++)
+        for (int c = 0; c < result.getCols(); c++)
+            for (int d = 0; d < result.getDepth(); d++)
                 result.data(r,c,d) += bright;
-    result.data.clamp(0,255);
     return result;
 }
 
 DAISGram DAISGram::grayscale()
 {
     DAISGram result;
-    result.data = Tensor(data);
+    result.data = data;
     float mean = 0;
-    for (int r = 0; r < result.data.rows(); r++)
+    for (int r = 0; r < result.getRows(); r++)
     {
-        for (int c = 0; c < result.data.cols(); c++)
+        for (int c = 0; c < result.getCols(); c++)
         {
             mean = 0;
-            for (int d = 0; d < result.data.depth(); d++)  mean += result.data(r,c,d);
+            for (int d = 0; d < result.getDepth(); d++)  mean += result.data(r,c,d);
             mean = mean/3;
-            for (int d = 0; d < result.data.depth(); d++)  result.data(r,c,d) = mean;
+            for (int d = 0; d < result.getDepth(); d++)  result.data(r,c,d) = mean;
         }
     }
     return result;
@@ -132,14 +134,14 @@ DAISGram DAISGram::grayscale()
 
 DAISGram DAISGram::warhol()
 {
-    Tensor normal    = Tensor(data);
-    Tensor RedGreen  = Tensor(data);
-    Tensor BlueGreen = Tensor(data);
-    Tensor RedBlue   = Tensor(data);
+    Tensor normal    = data;
+    Tensor RedGreen  = data;
+    Tensor BlueGreen = data;
+    Tensor RedBlue   = data;
 
-    for (int r = 0; r < data.rows(); r++)
+    for (int r = 0; r < getRows(); r++)
     {
-        for (int c = 0; c < data.cols(); c++)
+        for (int c = 0; c < getCols(); c++)
         {
             //swap red and green
             RedGreen(r,c,0)  =  data(r,c,1);
@@ -166,7 +168,7 @@ DAISGram DAISGram::sharpen()
     Tensor filter;
     filter.read_file("filters/sharpen");
     DAISGram result;
-    result.data = Tensor(data).convolve(filter);
+    result.data = data.convolve(filter);
     return result;
 }
 
@@ -175,15 +177,18 @@ DAISGram DAISGram::emboss()
     Tensor filter;
     filter.read_file("filters/emboss");
     DAISGram result;
-    result.data = Tensor(data).convolve(filter);
+    result.data = data.convolve(filter);
     return result;
 }
 
 DAISGram DAISGram::smooth(int h)
 {
-    Tensor filter = Tensor(h,h,3,(float)1/(float)(h*h));
+	if(!h)
+		throw unknown_operation();
+	
+    Tensor filter = Tensor(h,h,3,1/(float)(h*h));
     DAISGram result;
-    result.data = Tensor(data).convolve(filter);
+    result.data = data.convolve(filter);
     return result;
 }
 
@@ -192,7 +197,7 @@ DAISGram DAISGram::edge()
     Tensor filter;
     filter.read_file("filters/edge");
     DAISGram result;
-    result.data = Tensor(grayscale().data).convolve(filter);
+    result.data = grayscale().data.convolve(filter);
     return result;
 }
 
@@ -201,7 +206,7 @@ DAISGram DAISGram::blend(const DAISGram & rhs, float alpha)
     if(getRows() != rhs.data.rows() || getCols() != rhs.data.cols() || getDepth() != rhs.data.depth())
         throw(dimension_mismatch());
     DAISGram result;
-    result.data = Tensor(data);
+    result.data = data;
     for (int r = 0; r < result.data.rows(); r++)
         for (int c = 0; c < result.data.cols(); c++)
             for (int d = 0; d < result.data.depth(); d++)
@@ -212,8 +217,11 @@ DAISGram DAISGram::blend(const DAISGram & rhs, float alpha)
 
 DAISGram DAISGram::greenscreen(DAISGram & bkg, int rgb[], float threshold[])
 {
+	if(getRows() != bkg.getRows() || getCols() != bkg.getCols() || getDepth() != bkg.getDepth())
+        throw(dimension_mismatch());
+	
     DAISGram result;
-    result.data = Tensor(data);
+    result.data = data;
     for (int r = 0; r < result.getRows(); r++)
         for (int c = 0; c < result.getCols(); c++)
                 if( (rgb[0] - threshold[0] <= result.data(r,c,0)) && (result.data(r,c,0) <= rgb[0] + threshold[0]) &&
@@ -229,7 +237,7 @@ DAISGram DAISGram::greenscreen(DAISGram & bkg, int rgb[], float threshold[])
 DAISGram DAISGram::equalize()
 {
     DAISGram result;
-    result.data = Tensor(data);
+    result.data = data;
     float maxValue = 0, minValue = 0;
     float cdfMin = 0, cdfMax = 0;
 

@@ -66,6 +66,7 @@ bool Tensor::operator==(const Tensor& rhs) const
 {
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw dimension_mismatch();
+
 	float maxdiff = 0;
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -77,6 +78,9 @@ bool Tensor::operator==(const Tensor& rhs) const
 
 float Tensor::operator()(int row, int col, int ch) const
 {
+	if(!data)
+		throw tensor_not_initialized();
+	
 	if(	row >= this->r || col >= this->c || ch >= this->d ||
 		row < 0 || col < 0 || ch < 0)
 		throw(index_out_of_bound());
@@ -86,6 +90,9 @@ float Tensor::operator()(int row, int col, int ch) const
 
 float& Tensor::operator()(int row, int col, int ch)
 {
+	if(!data)
+		throw tensor_not_initialized();
+	
 	if(	row >= this->r || col >= this->c || ch >= this->d ||
 		row < 0 || col < 0 || ch < 0)
 		throw(index_out_of_bound());
@@ -98,7 +105,7 @@ Tensor Tensor::operator-(const Tensor &rhs)const
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
 
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -113,7 +120,7 @@ Tensor Tensor::operator+(const Tensor &rhs)const
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
 
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -128,7 +135,7 @@ Tensor Tensor::operator*(const Tensor &rhs)const
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
 		
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -143,7 +150,7 @@ Tensor Tensor::operator/(const Tensor &rhs)const
 	if(r != rhs.r || c != rhs.c || d != rhs.d)
 		throw(dimension_mismatch());
 		
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -155,7 +162,7 @@ Tensor Tensor::operator/(const Tensor &rhs)const
 
 Tensor Tensor::operator-(const float &rhs)const
 {
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -167,7 +174,7 @@ Tensor Tensor::operator-(const float &rhs)const
 
 Tensor Tensor::operator+(const float &rhs)const
 {
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -179,7 +186,7 @@ Tensor Tensor::operator+(const float &rhs)const
 
 Tensor Tensor::operator*(const float &rhs)const
 {
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -191,7 +198,7 @@ Tensor Tensor::operator*(const float &rhs)const
 
 Tensor Tensor::operator/(const float &rhs)const
 {
-	Tensor result = Tensor(*this);
+	Tensor result(*this);
 
 	for(int row = 0; row < r; row++)
 		for(int col = 0; col < c; col++)
@@ -209,6 +216,9 @@ Tensor& Tensor::operator=(const Tensor &other)
 
 void Tensor::init(int r, int c, int d, float v)
 {
+	if((r <= 0 || c <= 0 || d <= 0))
+		throw unknown_exception();
+
 	delete[] data;
 
 	this->r = r;
@@ -296,11 +306,13 @@ void Tensor::read_file(string filename)
 	ifstream file;
 	file.open (filename);
 
+	if(file.rdstate() && file.failbit)
+		throw unable_to_read_file();
+
 	file >> r;
 	file >> c;
 	file >> d;
 
-	delete[] data;
 	init(r, c, d);
 
 	for(int row = 0; row < r; row++)
@@ -355,6 +367,8 @@ Tensor Tensor::concat(const Tensor &rhs, int axis)const
 	if(d != rhs.d || (r != rhs.r && axis) || (c != rhs.c && !axis))
 		throw(concat_wrong_dimension());
 	
+	if(axis != 0 && axis != 1)
+		throw unknown_operation();
 	
 	Tensor result;
 	if(axis)
@@ -377,14 +391,19 @@ Tensor Tensor::concat(const Tensor &rhs, int axis)const
 
 void Tensor::rescale(float new_max)
 {	
-	for(int ch = 0; ch < d; ch++)
+	int ch = 0;
+	while(ch < d)
 	{
 		float min = getMin(ch);
 		float max = getMax(ch);
-		
-		for(int row = 0; row < r; row++)
-			for(int col = 0; col < c; col++)
-				operator()(row, col, ch) = ((operator()(row, col, ch)-min)/(max-min))*new_max;
+
+		if(max != min)
+		{
+			for(int row = 0; row < r; row++)
+				for(int col = 0; col < c; col++)
+					operator()(row, col, ch) = ((operator()(row, col, ch)-min)/(max-min))*new_max;
+		}
+		ch++;
 	}
 }
 
@@ -395,6 +414,12 @@ void Tensor::rescale(float new_max)
 */
 Tensor Tensor::convolve(const Tensor &f)const
 {
+	if(f.depth() != d)
+		throw dimension_mismatch();
+
+	if(!(f.rows() % 2) || !(f.cols() % 2))
+		throw filter_odd_dimensions();
+	
 	int hp = (f.r - 1) / 2;
 	int wp = (f.c - 1) / 2;
 

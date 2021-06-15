@@ -23,72 +23,48 @@ void show_help(){
 
 enum Filter { sharpen, smooth3, smooth5, smooth7, emboss, edge, grey, brighten20, brighten100};
 
-int main (int argc, char * argv[]) {
+int main (int argc, char * argv[]) 
+{
+/*
+    DAISGram dais, moon, result, compare;
+	dais.load_image("images/dais.bmp");
+	moon.load_image("images/fullmoon.bmp");
 
-    DAISGram b, c, img;
+	vector<string> outputs {
+		"dais_brighten_20", "dais_brighten_100", "dais_edge", "dais_gray", "dais_sharp",
+		"dais_smooth_3", "dais_smooth_5", "dais_smooth_7", "dais_warhol",
+		"dais_equalize_int_cast", "dais_equalize", "fullmoon_equalize_int_cast", "fullmoon_equalize"
+	};
 
-    vector<string> imageNames {"flower_hires", "dais", "fullmoon", "seba"};
-	vector<Filter> filterNames {sharpen, smooth3, smooth5, smooth7, emboss, edge, grey, brighten20, brighten100};
-
-	for(const auto& imageName : imageNames)
+	for(int i = 0; i < outputs.size(); i++)
 	{
-		b.load_image("images/" + imageName + ".bmp");
-		for(const auto& filterName : filterNames)
+		switch (i)
 		{
-            cout << "Applying filter " << "\"" << filterName << "\"" << " to image " << imageName << endl;
-            string Fname = "";
-            switch (filterName)
-            {
-                case sharpen:       img = b.sharpen();      Fname = "sharpen";  break;
-                case smooth3:       img = b.smooth(3);      Fname = "smooth3";   break;
-                case smooth5:       img = b.smooth(5);      Fname = "smooth5";   break;
-                case smooth7:       img = b.smooth(7);      Fname = "smooth7";   break;
-                case emboss:        img = b.emboss();       Fname = "emboss";   break;
-                case edge:          img = b.edge();         Fname = "edge";     break;
-                case grey:          img = b.grayscale();    Fname = "grayscale";     break;
-                case brighten20:    img = b.brighten(20);   Fname = "bighten20";     break;
-                case brighten100:   img = b.brighten(100);  Fname = "brighten100";     break;
-            }
-            img.save_image("testing/basic_filters/" + imageName + "/" + Fname + ".bmp");
-        }
-    }
+		case 0: 	result = dais.brighten(20);		break;
+		case 1: 	result = dais.brighten(100);	break;
+		case 2: 	result = dais.edge();			break;
+		case 3: 	result = dais.grayscale();		break;
+		case 4: 	result = dais.sharpen();		break;
+		case 5: 	result = dais.smooth(3);		break;
+		case 6: 	result = dais.smooth(5);		break;
+		case 7: 	result = dais.smooth(7);		break;
+		case 8: 	result = dais.warhol();			break;
+		case 9: 	result = dais.equalize();		break;
+		case 10: 	result = dais.equalize();		break;
+		case 11: 	result = moon.equalize();		break;
+		case 12: 	result = moon.equalize();		break;
+		}
 
-    b.load_image("images/equalize/hill.bmp");
-    c.load_image("images/fullmoon.bmp");
-    img = b.equalize();
-    img.save_image("testing/hill_equalized.bmp");
-    img = c.equalize();
-    img.save_image("testing/fullmoon_equalized.bmp");
+		string resultName = outputs.at(i) + ".bmp";
+		string resultPath = "testing/" + resultName;
 
-    b.load_image("images/dais.bmp");
-    img = b.warhol();
-    img.save_image("testing/warhol.bmp");
+		result.save_image(resultPath);
+		result.load_image(resultPath);
+		compare.load_image("results/" + resultName);
 
-    b.load_image("images/blend/blend_a.bmp");
-    c.load_image("images/blend/blend_b.bmp");
-    float alpha = 0.0F;
-    while (alpha <= 1)
-    {
-        img = b.blend(c,alpha);
-        img.save_image("testing/blend_"+ to_string(alpha).substr(0,4) +".bmp");
-        alpha += 0.25F;
-    }
-
-    b.load_image("images/greenscreen/gs_2.bmp");
-    c.load_image("images/greenscreen/gs_2_bkg.bmp");
-    int rgb[3]={144, 208, 49};
-    float th[3]={100, 100, 50};
-    img = b.greenscreen(c,rgb,th);
-    img.save_image("testing/dais_matrix.bmp");
-
-    b.load_image("images/greenscreen/gs_4.bmp");
-    c.load_image("images/greenscreen/gs_4_bkg.bmp");
-    int rgb1[3]={226,225,220};
-    float th1[3]={50, 50, 50};
-    img = b.greenscreen(c,rgb1,th1);
-    img.save_image("testing/seba_flower.bmp");
-
-
-
+		if(!(result.data == compare.data))
+			cout << outputs.at(i) << endl;
+	}
+*/
     return 0; /* ciao a tutti!*/
 }
